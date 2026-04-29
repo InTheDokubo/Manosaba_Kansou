@@ -3,180 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MD Archive Portal</title>
+    <title>Witch Trial Archive</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Crimson+Pro:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-red: #991b1b;
+            --glow-red: rgba(153, 27, 27, 0.4);
+        }
+
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            background-color: #050505; 
-            color: #e4e4e7;
+            background-color: #030303; 
+            color: #d1d1d6;
+            overflow: hidden;
+            user-select: none; /* 世界観演出のため選択を制限（必要なら削除してください） */
         }
-        /* Markdown Content Styling */
+
+        /* 背景の赤い揺らぎ */
+        .bg-glow {
+            position: fixed;
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, var(--glow-red) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+            filter: blur(100px);
+            opacity: 0.4;
+        }
+        .bg-glow-tr { top: -25vw; right: -15vw; }
+        .bg-glow-bl { bottom: -25vw; left: -15vw; }
+
+        .vignette {
+            position: fixed;
+            inset: 0;
+            box-shadow: inset 0 0 180px rgba(0,0,0,0.95);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* Markdown コンテンツの装飾 */
         .prose {
             max-width: 100%;
-            color: #d4d4d8;
+            color: #bcbcbc;
+            font-size: 1.05rem;
         }
         .prose Title, .prose title { display: none; }
         
-        .article-header { color: #ffffff; font-weight: 700; font-size: 2.25rem; margin-bottom: 2rem; border-left: 6px solid #3b82f6; padding-left: 1.5rem; line-height: 1.2; }
-        
-        .prose h1 { color: #ffffff; font-weight: 700; font-size: 1.75rem; margin-bottom: 1.5rem; }
-        .prose h2 { color: #f4f4f5; font-weight: 600; font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 1px solid #27272a; padding-bottom: 0.5rem; }
-        .prose p { margin-bottom: 1.2rem; line-height: 1.8; }
-        .prose code { background: #1e1e1e; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: #f472b6; }
-        .prose pre { background: #0f0f0f; padding: 1.2rem; border-radius: 12px; overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid #27272a; }
-        .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1.2rem; }
-        .prose blockquote { border-left: 4px solid #3b82f6; padding-left: 1.2rem; font-style: italic; color: #a1a1aa; background: #111; padding-top: 0.5rem; padding-bottom: 0.5rem; border-radius: 0 8px 8px 0; }
-        .prose a { color: #3b82f6; text-decoration: none; border-bottom: 1px dashed #3b82f6; }
-        .prose a:hover { color: #60a5fa; border-bottom-style: solid; }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
-
-        .drawer-transition { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .modal-blur { backdrop-filter: blur(20px); }
-        
-        /* Modal animation */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        .article-header { 
+            font-family: 'Crimson Pro', serif;
+            color: #ffffff; 
+            font-weight: 700; 
+            font-size: 2.8rem; 
+            margin-bottom: 3rem; 
+            border-left: 3px solid var(--primary-red); 
+            padding-left: 2rem; 
+            line-height: 1.1;
+            text-shadow: 0 0 20px rgba(153, 27, 27, 0.7);
+            font-style: italic;
         }
-        .animate-modal { animation: fadeInScale 0.4s ease-out forwards; }
+        
+        .prose h1 { color: #ffffff; font-weight: 700; font-size: 2rem; margin-bottom: 1.5rem; border-bottom: 1px solid #450a0a; padding-bottom: 0.5rem; }
+        .prose h2 { color: #fecaca; font-weight: 600; font-size: 1.6rem; margin-top: 3.5rem; margin-bottom: 1.5rem; border-left: 4px solid #7f1d1d; padding-left: 1.2rem; }
+        .prose p { margin-bottom: 1.8rem; line-height: 2.1; letter-spacing: 0.03em; }
+        .prose code { background: #1a0505; padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace; color: #f87171; border: 1px solid #450a0a; font-size: 0.9em; }
+        .prose pre { background: #080202; padding: 1.8rem; border-radius: 4px; overflow-x: auto; margin-bottom: 2rem; border: 1px solid #2d0a0a; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        .prose ul { list-style-type: none; margin-bottom: 2rem; }
+        .prose ul li { position: relative; padding-left: 2rem; margin-bottom: 0.8rem; }
+        .prose ul li::before { content: "†"; position: absolute; left: 0; color: #991b1b; font-weight: bold; font-size: 1.2rem; }
+        .prose blockquote { border-left: 2px solid #991b1b; padding: 1.2rem 2rem; font-style: italic; color: #a1a1aa; background: rgba(15, 5, 5, 0.8); margin-bottom: 2rem; }
+        .prose a { color: #ef4444; text-decoration: none; border-bottom: 1px solid rgba(239, 68, 68, 0.3); transition: all 0.4s ease; }
+        .prose a:hover { color: #f87171; border-bottom: 1px solid #f87171; text-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #030303; }
+        ::-webkit-scrollbar-thumb { background: #331111; border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: #991b1b; }
+
+        .drawer-transition { transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-blur { backdrop-filter: blur(30px) grayscale(0.8); }
+        
+        @keyframes fadeInReveal {
+            from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        .animate-reveal { animation: fadeInReveal 1s ease-out forwards; }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+        }
+        .pulse-glow { animation: pulseGlow 8s infinite ease-in-out; }
+
+        .active-file {
+            background: linear-gradient(90deg, rgba(153, 27, 27, 0.25) 0%, transparent 100%);
+            border-left: 3px solid var(--primary-red);
+            color: #fff !important;
+            text-shadow: 0 0 12px var(--glow-red);
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="min-h-screen flex flex-col md:flex-row overflow-hidden relative">
 
-    <!-- Disclaimer Modal -->
-    <div id="disclaimerModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 modal-blur hidden">
-        <div class="bg-zinc-900 border border-zinc-800 p-10 md:p-16 rounded-[2rem] max-w-2xl w-full shadow-[0_0_100px_rgba(0,0,0,1)] text-center animate-modal">
-            <div class="w-24 h-24 bg-red-600/20 text-red-600 rounded-full flex items-center justify-center mx-auto mb-10 border border-red-600/30">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    <div class="bg-glow bg-glow-tr pulse-glow"></div>
+    <div class="bg-glow bg-glow-bl pulse-glow"></div>
+    <div class="vignette"></div>
+
+    <!-- 入場警告モーダル -->
+    <div id="disclaimerModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/98 modal-blur hidden">
+        <div class="bg-[#0a0505] border border-red-900/40 p-12 md:p-20 rounded-sm max-w-3xl w-full shadow-[0_0_200px_rgba(153,27,27,0.4)] text-center relative overflow-hidden animate-reveal">
+            <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');"></div>
+            
+            <div class="w-28 h-28 bg-red-600/10 text-red-700 rounded-full flex items-center justify-center mx-auto mb-12 border border-red-700/20 shadow-[0_0_50px_rgba(153,27,27,0.5)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
             
-            <h2 class="text-3xl md:text-5xl font-black text-white mb-8 tracking-tighter uppercase">
-                Critical Warning
+            <h2 class="text-4xl md:text-6xl font-black text-white mb-10 tracking-[0.3em] uppercase italic" style="font-family: 'Crimson Pro', serif;">
+                WARNING
             </h2>
             
-            <div class="text-zinc-300 space-y-6 text-left mb-12 leading-relaxed text-lg md:text-xl font-medium">
-                <div class="flex items-start bg-red-950/10 p-4 rounded-xl border border-red-900/20">
-                    <span class="text-red-500 font-bold mr-4 text-2xl">⚠</span>
-                    <p>「魔法少女の魔女裁判」の重大なネタバレが含まれています。</p>
+            <div class="text-zinc-400 space-y-8 text-left mb-16 leading-relaxed text-xl font-light">
+                <div class="bg-red-950/20 p-6 border-l-4 border-red-700">
+                    <p class="text-zinc-100 font-bold tracking-wider">「魔法少女の魔女裁判」の重大なネタバレを含みます。</p>
                 </div>
-                <div class="flex items-start p-4">
-                    <span class="text-zinc-600 font-bold mr-4 text-2xl">●</span>
-                    <p>内容には極めて個人的、かつ主観的な感想が含まれます。</p>
-                </div>
-                <div class="flex items-start p-4">
-                    <span class="text-zinc-600 font-bold mr-4 text-2xl">●</span>
-                    <p>キャラクターへの強い愛情を持つ読者にとって、不快感や憤りを感じさせる可能性のある危険な表現が含まれます。</p>
+                <div class="px-6 space-y-4">
+                    <p class="text-base opacity-90 italic flex items-start"><span class="text-red-800 mr-3">†</span> 内容には筆者による極めて主観的な感情と解析が含まれます。</p>
+                    <p class="text-base opacity-90 italic flex items-start"><span class="text-red-800 mr-3">†</span> キャラクターへの強い想いを持つ方にとって、不快感を抱かせかねない表現が含まれる危険性があります。</p>
                 </div>
             </div>
             
-            <div class="flex flex-col gap-4">
-                <button id="enterBtn" class="w-full bg-white text-black text-xl font-black py-6 rounded-2xl hover:bg-zinc-200 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
-                    理解して入場する
+            <div class="flex flex-col gap-6 relative z-10">
+                <button id="enterBtn" class="w-full bg-red-950/90 text-white text-2xl font-bold py-8 border border-red-600/40 hover:bg-red-800 hover:shadow-[0_0_40px_rgba(153,27,27,0.5)] transition-all duration-700 tracking-[0.5em] uppercase">
+                    入場する
                 </button>
-                <p class="text-zinc-600 text-xs uppercase tracking-widest mt-2">Accessing Restricted Archive Database</p>
+                <p class="text-zinc-800 text-[11px] uppercase tracking-[0.6em] font-bold">Confidential Access Granted Only to the Brave</p>
             </div>
         </div>
     </div>
 
-    <!-- Mobile Header -->
-    <header class="md:hidden flex items-center justify-between p-4 bg-black border-b border-zinc-900 z-50">
-        <h1 class="text-lg font-bold tracking-tighter uppercase">Witch Trial Archive</h1>
-        <button id="menuBtn" class="p-2 text-zinc-400 hover:text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+    <!-- モバイル用ヘッダー -->
+    <header class="md:hidden flex items-center justify-between p-6 bg-black/90 border-b border-red-950/40 z-50 backdrop-blur-xl">
+        <h1 class="text-xs font-black tracking-[0.4em] uppercase text-red-50 text-shadow-glow">Witch Trial</h1>
+        <button id="menuBtn" class="p-2 text-red-800 active:scale-90 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 6h16M4 12h16m-7 6h7" />
             </svg>
         </button>
     </header>
 
-    <!-- Sidebar (Drawer on mobile) -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 md:static md:w-80 bg-zinc-950 border-r border-zinc-900 z-50 drawer-transition w-72">
-        <div class="h-full flex flex-col p-6">
-            <!-- Mobile Close Button -->
-            <button id="closeBtn" class="md:hidden self-end p-2 text-zinc-500 hover:text-white mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    <!-- サイドバー (ドロワー) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 md:static md:w-80 bg-[#050101] border-r border-red-950/40 z-50 drawer-transition w-72 shadow-2xl overflow-hidden flex flex-col">
+        <div class="h-full flex flex-col p-10">
+            <button id="closeBtn" class="md:hidden self-end p-2 text-zinc-700 hover:text-red-600 mb-8 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
 
-            <div class="hidden md:block mb-10">
-                <h1 class="text-xl font-black italic tracking-tighter text-white uppercase">
+            <div class="hidden md:block mb-20 px-2">
+                <h1 class="text-2xl font-black italic tracking-tighter text-white uppercase leading-none" style="font-family: 'Crimson Pro', serif; text-shadow: 0 0 15px rgba(153, 27, 27, 0.5);">
                     Witch Trial
                 </h1>
-                <p class="text-[10px] text-zinc-600 mt-1 uppercase tracking-[0.3em]">Analysis & Memoirs</p>
+                <p class="text-[9px] text-red-900 font-black mt-2 uppercase tracking-[0.5em] opacity-80">Forbidden Memoirs</p>
             </div>
 
             <nav class="flex-1 overflow-y-auto pr-2">
-                <p class="text-[10px] font-bold text-zinc-600 mb-6 px-4 uppercase tracking-[0.2em]">Recordings</p>
-                <ul id="fileList" class="space-y-2">
-                    <div id="sidebarLoader" class="space-y-4 px-4">
-                        <div class="h-4 bg-zinc-900 rounded w-full animate-pulse"></div>
-                        <div class="h-4 bg-zinc-900 rounded w-2/3 animate-pulse"></div>
-                        <div class="h-4 bg-zinc-900 rounded w-4/5 animate-pulse"></div>
-                    </div>
+                <p class="text-[10px] font-black text-zinc-800 mb-10 px-4 uppercase tracking-[0.4em] border-b border-zinc-900 pb-2">Records List</p>
+                <ul id="fileList" class="space-y-6">
+                    <!-- JSで動的に生成 -->
                 </ul>
             </nav>
 
-            <div class="mt-auto pt-6 border-t border-zinc-900 text-[10px] text-zinc-700 text-center uppercase tracking-widest">
-                Private Archive // Ver 1.0
+            <div class="mt-auto pt-10 border-t border-red-950/20 text-[9px] text-zinc-800 text-center uppercase tracking-[0.5em] font-bold opacity-50">
+                Security Level 4 // Encrypted
             </div>
         </div>
     </aside>
 
-    <!-- Overlay -->
-    <div id="overlay" class="fixed inset-0 bg-black/80 z-40 hidden transition-opacity duration-300"></div>
+    <!-- オーバーレイ -->
+    <div id="overlay" class="fixed inset-0 bg-black/95 z-40 hidden transition-opacity duration-700"></div>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto relative">
-        <div id="loadingBar" class="fixed top-0 left-0 w-0 h-1 bg-blue-600 transition-all duration-300 z-[60] opacity-0"></div>
+    <!-- メインコンテンツ -->
+    <main class="flex-1 overflow-y-auto relative z-10 scroll-smooth">
+        <div id="loadingBar" class="fixed top-0 left-0 w-0 h-[3px] bg-red-700 transition-all duration-1000 z-[60] opacity-0 shadow-[0_0_15px_#991b1b]"></div>
         
-        <article id="content" class="max-w-3xl mx-auto px-6 py-12 md:px-12 md:py-24">
-            <!-- Default Welcome -->
-            <div id="welcomeMessage" class="flex flex-col items-center justify-center min-h-[50vh] text-center">
-                <div class="w-20 h-20 border border-zinc-800 rounded-full flex items-center justify-center mb-8">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-zinc-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                </div>
-                <h2 class="text-xl font-medium text-zinc-500 uppercase tracking-widest">Select a record to begin</h2>
+        <article id="content" class="max-w-4xl mx-auto px-10 py-20 md:px-20 md:py-40">
+            <!-- デフォルト画面 -->
+            <div id="welcomeMessage" class="flex flex-col items-center justify-center min-h-[40vh] text-center opacity-40">
+                <div class="text-[80px] text-red-950 mb-12 select-none font-light">†</div>
+                <h2 class="text-xs font-black text-zinc-800 uppercase tracking-[0.7em]">Waiting for Archive Access...</h2>
             </div>
             
             <div id="articleContainer" class="hidden">
-                <h1 id="articleTitle" class="article-header"></h1>
-                <div id="markdownArea" class="prose"></div>
+                <h1 id="articleTitle" class="article-header animate-reveal"></h1>
+                <div id="markdownArea" class="prose animate-reveal" style="animation-delay: 0.2s;"></div>
+                <div class="mt-20 pt-10 border-t border-red-950/20 text-center opacity-20">
+                    <span class="text-[20px]">†</span>
+                </div>
             </div>
 
-            <div id="errorMessage" class="hidden p-8 bg-red-950/20 border border-red-900/30 rounded-2xl text-red-400">
-                <p class="font-bold mb-2 uppercase tracking-tighter">Access Denied</p>
-                <p id="errorText" class="text-sm opacity-80">Failed to retrieve the encrypted file.</p>
+            <!-- エラー表示 -->
+            <div id="errorMessage" class="hidden p-12 bg-red-950/5 border border-red-900/20 rounded-sm text-red-700 text-center animate-reveal">
+                <p class="font-black mb-6 tracking-[0.5em] uppercase text-xl">Access Denied</p>
+                <p id="errorText" class="text-sm opacity-70 font-mono italic">The record is currently unreachable or corrupted.</p>
+                <button onclick="location.reload()" class="mt-8 text-[10px] uppercase tracking-[0.3em] border border-red-900/30 px-6 py-2 hover:bg-red-900 hover:text-white transition-all">Reconnect</button>
             </div>
         </article>
     </main>
 
     <script>
         /**
-         * 表示するファイルのリスト
+         * 【管理者設定】
+         * Dataフォルダにある読み込みたい .md ファイルを正確にリストアップしてください。
+         * GitHub Pagesではフォルダの中身を自動取得できないため、ここへの記述が必要です。
          */
         const MD_FILES = [
-            'introduction.md',
+            'intro.md',
             'analysis-01.md',
-            'memoirs.md'
+            'chara-memo.md'
+            // 記事を増やしたい場合は、Dataフォルダにファイルを置いてここに名前を足すだけです。
         ];
 
-        const DATA_PATH = 'Data/';
-        const STORAGE_KEY = 'witch_trial_accepted';
+        // GitHub Pagesのサブディレクトリに対応するためのパス設定
+        // "./Data/" とすることで、どの環境でも相対的にDataフォルダを参照します。
+        const DATA_PATH = './Data/';
+        const STORAGE_KEY = 'witch_trial_accepted_v1';
 
         const fileList = document.getElementById('fileList');
         const articleContainer = document.getElementById('articleContainer');
@@ -193,9 +250,7 @@
         const disclaimerModal = document.getElementById('disclaimerModal');
         const enterBtn = document.getElementById('enterBtn');
 
-        /**
-         * 入場チェック
-         */
+        // 初回訪問時の警告
         function checkEntrance() {
             if (!localStorage.getItem(STORAGE_KEY)) {
                 disclaimerModal.classList.remove('hidden');
@@ -205,35 +260,45 @@
         enterBtn.addEventListener('click', () => {
             localStorage.setItem(STORAGE_KEY, 'true');
             disclaimerModal.classList.add('hidden');
+            // 入場時に少しバイブレーション演出（対応ブラウザのみ）
+            if (navigator.vibrate) navigator.vibrate(50);
         });
 
         /**
-         * ファイルからタイトルを抽出
+         * メニュー構築
          */
         async function initFileList() {
-            fileList.innerHTML = '';
+            if (MD_FILES.length === 0) {
+                fileList.innerHTML = '<p class="text-[10px] text-zinc-900 px-4">No archives found.</p>';
+                return;
+            }
+
+            fileList.innerHTML = '<div class="px-4 py-2 text-[10px] text-zinc-900 tracking-[0.4em] animate-pulse italic">DECRYPTING...</div>';
             
             const results = await Promise.all(MD_FILES.map(async (filename) => {
                 try {
-                    const response = await fetch(DATA_PATH + filename);
-                    if (!response.ok) return { filename, title: filename };
+                    // キャッシュ回避のためにタイムスタンプを付与（任意）
+                    const response = await fetch(DATA_PATH + filename + '?t=' + new Date().getTime());
+                    if (!response.ok) throw new Error();
+                    
                     const text = await response.text();
                     const match = text.match(/<Title>(.*?)<\/Title>/i);
                     const title = match ? match[1] : filename;
-                    return { filename, title };
+                    return { filename, title, error: false };
                 } catch (e) {
-                    return { filename, title: filename };
+                    return { filename, title: `[INVALID] ${filename}`, error: true };
                 }
             }));
 
             fileList.innerHTML = '';
             results.forEach(file => {
                 const li = document.createElement('li');
+                li.className = "group";
                 li.innerHTML = `
-                    <button class="w-full text-left px-5 py-4 rounded-xl text-sm transition-all duration-300 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-100 flex items-center group"
-                            onclick="loadMarkdown('${file.filename}', this, '${file.title.replace(/'/g, "\\'")}')">
-                        <span class="w-1.5 h-1.5 bg-zinc-800 rounded-full mr-4 group-hover:bg-blue-600 transition-colors"></span>
-                        <span class="truncate font-medium tracking-wide">${file.title}</span>
+                    <button class="w-full text-left px-6 py-4 transition-all duration-700 ${file.error ? 'text-red-950 cursor-not-allowed opacity-30' : 'text-zinc-600 hover:text-red-500'} flex items-center relative overflow-hidden"
+                            ${file.error ? 'disabled' : `onclick="loadMarkdown('${file.filename}', this, '${file.title.replace(/'/g, "\\'")}')"`}>
+                        <span class="truncate font-light tracking-[0.2em] text-[11px] uppercase italic z-10">${file.title}</span>
+                        <div class="absolute inset-0 bg-red-950/0 group-hover:bg-red-950/10 transition-colors duration-700"></div>
                     </button>
                 `;
                 fileList.appendChild(li);
@@ -241,67 +306,68 @@
         }
 
         /**
-         * Markdownの読み込み
+         * 記事の読み込みと表示
          */
         async function loadMarkdown(filename, element, title) {
             welcomeMessage.classList.add('hidden');
             errorMessage.classList.add('hidden');
             articleContainer.classList.add('hidden');
             
+            // ローディング演出
             loadingBar.style.opacity = '1';
             loadingBar.style.width = '30%';
 
-            document.querySelectorAll('#fileList button').forEach(btn => {
-                btn.classList.remove('bg-zinc-900', 'text-zinc-100');
-                btn.classList.add('text-zinc-500');
-            });
-            if(element) {
-                element.classList.add('bg-zinc-900', 'text-zinc-100');
-                element.classList.remove('text-zinc-500');
-            }
+            // サイドバーの選択状態
+            document.querySelectorAll('#fileList button').forEach(btn => btn.classList.remove('active-file'));
+            if(element) element.classList.add('active-file');
 
+            // モバイルならメニューを閉じる
             if (window.innerWidth < 768) toggleMenu(false);
 
             try {
                 const response = await fetch(DATA_PATH + filename);
                 loadingBar.style.width = '70%';
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                if (!response.ok) throw new Error();
                 
                 let text = await response.text();
                 loadingBar.style.width = '100%';
 
+                // タイトルと本文の処理
                 articleTitle.innerText = title;
                 const cleanText = text.replace(/<Title>.*?<\/Title>/gi, '');
+                
+                // MarkdownをHTMLに変換
                 markdownArea.innerHTML = marked.parse(cleanText);
                 
                 articleContainer.classList.remove('hidden');
-                articleContainer.style.opacity = 0;
-                setTimeout(() => {
-                    articleContainer.style.transition = 'opacity 0.6s ease';
-                    articleContainer.style.opacity = 1;
-                }, 50);
+                // スクロールをトップに戻す
+                document.querySelector('main').scrollTop = 0;
 
             } catch (err) {
                 errorMessage.classList.remove('hidden');
-                errorText.innerText = `Could not load record: ${filename}`;
+                errorText.innerText = `[ERROR]: RECORD '${filename}' IS UNREADABLE. PLEASE VERIFY FILE PATH AND GITHUB PERMISSIONS.`;
             } finally {
                 setTimeout(() => {
                     loadingBar.style.opacity = '0';
                     loadingBar.style.width = '0%';
-                }, 400);
+                }, 1000);
             }
         }
 
+        // メニュー開閉
         function toggleMenu(show) {
             if (show) {
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
-                overlay.classList.add('opacity-100');
+                overlay.style.display = 'block';
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
                 document.body.style.overflow = 'hidden';
             } else {
                 sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
                 overlay.classList.remove('opacity-100');
+                setTimeout(() => {
+                    if(!overlay.classList.contains('opacity-100')) overlay.style.display = 'none';
+                }, 700);
                 document.body.style.overflow = '';
             }
         }
@@ -310,6 +376,7 @@
         closeBtn.addEventListener('click', () => toggleMenu(false));
         overlay.addEventListener('click', () => toggleMenu(false));
 
+        // 起動
         window.onload = () => {
             checkEntrance();
             initFileList();
