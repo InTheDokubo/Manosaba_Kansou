@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD Archive Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #050505; 
+            color: #e4e4e7;
+        }
+        /* Markdown Content Styling */
+        .prose {
+            max-width: 100%;
+            color: #d4d4d8;
+        }
+        .prose Title, .prose title { display: none; }
+        
+        .article-header { color: #ffffff; font-weight: 700; font-size: 2.25rem; margin-bottom: 2rem; border-left: 6px solid #3b82f6; padding-left: 1.5rem; line-height: 1.2; }
+        
+        .prose h1 { color: #ffffff; font-weight: 700; font-size: 1.75rem; margin-bottom: 1.5rem; }
+        .prose h2 { color: #f4f4f5; font-weight: 600; font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 1px solid #27272a; padding-bottom: 0.5rem; }
+        .prose p { margin-bottom: 1.2rem; line-height: 1.8; }
+        .prose code { background: #1e1e1e; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: #f472b6; }
+        .prose pre { background: #0f0f0f; padding: 1.2rem; border-radius: 12px; overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid #27272a; }
+        .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1.2rem; }
+        .prose blockquote { border-left: 4px solid #3b82f6; padding-left: 1.2rem; font-style: italic; color: #a1a1aa; background: #111; padding-top: 0.5rem; padding-bottom: 0.5rem; border-radius: 0 8px 8px 0; }
+        .prose a { color: #3b82f6; text-decoration: none; border-bottom: 1px dashed #3b82f6; }
+        .prose a:hover { color: #60a5fa; border-bottom-style: solid; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        .drawer-transition { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .modal-blur { backdrop-filter: blur(20px); }
+        
+        /* Modal animation */
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-modal { animation: fadeInScale 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Disclaimer Modal -->
+    <div id="disclaimerModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 modal-blur hidden">
+        <div class="bg-zinc-900 border border-zinc-800 p-10 md:p-16 rounded-[2rem] max-w-2xl w-full shadow-[0_0_100px_rgba(0,0,0,1)] text-center animate-modal">
+            <div class="w-24 h-24 bg-red-600/20 text-red-600 rounded-full flex items-center justify-center mx-auto mb-10 border border-red-600/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            
+            <h2 class="text-3xl md:text-5xl font-black text-white mb-8 tracking-tighter uppercase">
+                Critical Warning
+            </h2>
+            
+            <div class="text-zinc-300 space-y-6 text-left mb-12 leading-relaxed text-lg md:text-xl font-medium">
+                <div class="flex items-start bg-red-950/10 p-4 rounded-xl border border-red-900/20">
+                    <span class="text-red-500 font-bold mr-4 text-2xl">⚠</span>
+                    <p>「魔法少女の魔女裁判」の重大なネタバレが含まれています。</p>
+                </div>
+                <div class="flex items-start p-4">
+                    <span class="text-zinc-600 font-bold mr-4 text-2xl">●</span>
+                    <p>内容には極めて個人的、かつ主観的な感想が含まれます。</p>
+                </div>
+                <div class="flex items-start p-4">
+                    <span class="text-zinc-600 font-bold mr-4 text-2xl">●</span>
+                    <p>キャラクターへの強い愛情を持つ読者にとって、不快感や憤りを感じさせる可能性のある危険な表現が含まれます。</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+                <button id="enterBtn" class="w-full bg-white text-black text-xl font-black py-6 rounded-2xl hover:bg-zinc-200 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
+                    理解して入場する
+                </button>
+                <p class="text-zinc-600 text-xs uppercase tracking-widest mt-2">Accessing Restricted Archive Database</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between p-4 bg-black border-b border-zinc-900 z-50">
+        <h1 class="text-lg font-bold tracking-tighter uppercase">Witch Trial Archive</h1>
+        <button id="menuBtn" class="p-2 text-zinc-400 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+        </button>
+    </header>
+
+    <!-- Sidebar (Drawer on mobile) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 md:static md:w-80 bg-zinc-950 border-r border-zinc-900 z-50 drawer-transition w-72">
+        <div class="h-full flex flex-col p-6">
+            <!-- Mobile Close Button -->
+            <button id="closeBtn" class="md:hidden self-end p-2 text-zinc-500 hover:text-white mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <div class="hidden md:block mb-10">
+                <h1 class="text-xl font-black italic tracking-tighter text-white uppercase">
+                    Witch Trial
+                </h1>
+                <p class="text-[10px] text-zinc-600 mt-1 uppercase tracking-[0.3em]">Analysis & Memoirs</p>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto pr-2">
+                <p class="text-[10px] font-bold text-zinc-600 mb-6 px-4 uppercase tracking-[0.2em]">Recordings</p>
+                <ul id="fileList" class="space-y-2">
+                    <div id="sidebarLoader" class="space-y-4 px-4">
+                        <div class="h-4 bg-zinc-900 rounded w-full animate-pulse"></div>
+                        <div class="h-4 bg-zinc-900 rounded w-2/3 animate-pulse"></div>
+                        <div class="h-4 bg-zinc-900 rounded w-4/5 animate-pulse"></div>
+                    </div>
+                </ul>
+            </nav>
+
+            <div class="mt-auto pt-6 border-t border-zinc-900 text-[10px] text-zinc-700 text-center uppercase tracking-widest">
+                Private Archive // Ver 1.0
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/80 z-40 hidden transition-opacity duration-300"></div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto relative">
+        <div id="loadingBar" class="fixed top-0 left-0 w-0 h-1 bg-blue-600 transition-all duration-300 z-[60] opacity-0"></div>
+        
+        <article id="content" class="max-w-3xl mx-auto px-6 py-12 md:px-12 md:py-24">
+            <!-- Default Welcome -->
+            <div id="welcomeMessage" class="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                <div class="w-20 h-20 border border-zinc-800 rounded-full flex items-center justify-center mb-8">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-zinc-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <h2 class="text-xl font-medium text-zinc-500 uppercase tracking-widest">Select a record to begin</h2>
+            </div>
+            
+            <div id="articleContainer" class="hidden">
+                <h1 id="articleTitle" class="article-header"></h1>
+                <div id="markdownArea" class="prose"></div>
+            </div>
+
+            <div id="errorMessage" class="hidden p-8 bg-red-950/20 border border-red-900/30 rounded-2xl text-red-400">
+                <p class="font-bold mb-2 uppercase tracking-tighter">Access Denied</p>
+                <p id="errorText" class="text-sm opacity-80">Failed to retrieve the encrypted file.</p>
+            </div>
+        </article>
+    </main>
+
+    <script>
+        /**
+         * 表示するファイルのリスト
+         */
+        const MD_FILES = [
+            'introduction.md',
+            'analysis-01.md',
+            'memoirs.md'
+        ];
+
+        const DATA_PATH = 'Data/';
+        const STORAGE_KEY = 'witch_trial_accepted';
+
+        const fileList = document.getElementById('fileList');
+        const articleContainer = document.getElementById('articleContainer');
+        const articleTitle = document.getElementById('articleTitle');
+        const markdownArea = document.getElementById('markdownArea');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const loadingBar = document.getElementById('loadingBar');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const disclaimerModal = document.getElementById('disclaimerModal');
+        const enterBtn = document.getElementById('enterBtn');
+
+        /**
+         * 入場チェック
+         */
+        function checkEntrance() {
+            if (!localStorage.getItem(STORAGE_KEY)) {
+                disclaimerModal.classList.remove('hidden');
+            }
+        }
+
+        enterBtn.addEventListener('click', () => {
+            localStorage.setItem(STORAGE_KEY, 'true');
+            disclaimerModal.classList.add('hidden');
+        });
+
+        /**
+         * ファイルからタイトルを抽出
+         */
+        async function initFileList() {
+            fileList.innerHTML = '';
+            
+            const results = await Promise.all(MD_FILES.map(async (filename) => {
+                try {
+                    const response = await fetch(DATA_PATH + filename);
+                    if (!response.ok) return { filename, title: filename };
+                    const text = await response.text();
+                    const match = text.match(/<Title>(.*?)<\/Title>/i);
+                    const title = match ? match[1] : filename;
+                    return { filename, title };
+                } catch (e) {
+                    return { filename, title: filename };
+                }
+            }));
+
+            fileList.innerHTML = '';
+            results.forEach(file => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <button class="w-full text-left px-5 py-4 rounded-xl text-sm transition-all duration-300 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-100 flex items-center group"
+                            onclick="loadMarkdown('${file.filename}', this, '${file.title.replace(/'/g, "\\'")}')">
+                        <span class="w-1.5 h-1.5 bg-zinc-800 rounded-full mr-4 group-hover:bg-blue-600 transition-colors"></span>
+                        <span class="truncate font-medium tracking-wide">${file.title}</span>
+                    </button>
+                `;
+                fileList.appendChild(li);
+            });
+        }
+
+        /**
+         * Markdownの読み込み
+         */
+        async function loadMarkdown(filename, element, title) {
+            welcomeMessage.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            articleContainer.classList.add('hidden');
+            
+            loadingBar.style.opacity = '1';
+            loadingBar.style.width = '30%';
+
+            document.querySelectorAll('#fileList button').forEach(btn => {
+                btn.classList.remove('bg-zinc-900', 'text-zinc-100');
+                btn.classList.add('text-zinc-500');
+            });
+            if(element) {
+                element.classList.add('bg-zinc-900', 'text-zinc-100');
+                element.classList.remove('text-zinc-500');
+            }
+
+            if (window.innerWidth < 768) toggleMenu(false);
+
+            try {
+                const response = await fetch(DATA_PATH + filename);
+                loadingBar.style.width = '70%';
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                
+                let text = await response.text();
+                loadingBar.style.width = '100%';
+
+                articleTitle.innerText = title;
+                const cleanText = text.replace(/<Title>.*?<\/Title>/gi, '');
+                markdownArea.innerHTML = marked.parse(cleanText);
+                
+                articleContainer.classList.remove('hidden');
+                articleContainer.style.opacity = 0;
+                setTimeout(() => {
+                    articleContainer.style.transition = 'opacity 0.6s ease';
+                    articleContainer.style.opacity = 1;
+                }, 50);
+
+            } catch (err) {
+                errorMessage.classList.remove('hidden');
+                errorText.innerText = `Could not load record: ${filename}`;
+            } finally {
+                setTimeout(() => {
+                    loadingBar.style.opacity = '0';
+                    loadingBar.style.width = '0%';
+                }, 400);
+            }
+        }
+
+        function toggleMenu(show) {
+            if (show) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('opacity-100');
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                overlay.classList.remove('opacity-100');
+                document.body.style.overflow = '';
+            }
+        }
+
+        menuBtn.addEventListener('click', () => toggleMenu(true));
+        closeBtn.addEventListener('click', () => toggleMenu(false));
+        overlay.addEventListener('click', () => toggleMenu(false));
+
+        window.onload = () => {
+            checkEntrance();
+            initFileList();
+        };
+    </script>
+</body>
+</html>
