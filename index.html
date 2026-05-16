@@ -63,7 +63,7 @@
 
         /* Prose styles */
         .prose { max-width: 100%; color: #b7b7b7; font-size: 1.1rem; line-height: 2; }
-        .prose Title, .prose title { display: none; }
+        .prose Title, .prose title, .prose Denger, .prose denger { display: none; }
         
         .article-header { 
             font-family: 'Crimson Pro', serif;
@@ -209,7 +209,8 @@
         const MD_FILES = [
             { file: '01 レイア処刑.md', thumb: '01.jpg' },
             { file: '02 １話細かいところ.md', thumb: '02.jpg' },
-            { file: '03.md', thumb: '02.jpg' }
+            { file: '03.md', thumb: '02.jpg' },
+            { file: '04.md', thumb: '02.jpg' }
         ];
 
         const DATA_PATH = './Data/';
@@ -224,18 +225,65 @@
         const disclaimerModal = document.getElementById('disclaimerModal');
         const enterBtn = document.getElementById('enterBtn');
         const backToList = document.getElementById('backToList');
+        let pendingDisclaimerAction = null;
+
+        function openDisclaimer(onConfirm) {
+            pendingDisclaimerAction = onConfirm;
+            disclaimerModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDisclaimer() {
+            disclaimerModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function parseArticleText(text, fallbackTitle) {
+            const titleMatch = text.match(/<Title>(.*?)<\/Title>/i);
+            const danger = /<Denger\b/i.test(text);
+            const title = titleMatch ? titleMatch[1] : fallbackTitle;
+            const cleanText = text
+                .replace(/<Title>.*?<\/Title>/gi, '')
+                .replace(/<Denger\b[^>]*>/gi, '')
+                .replace(/<\/Denger>/gi, '');
+
+            return { title, danger, cleanText };
+        }
+
+        function renderArticle({ title, index, cleanText }) {
+            portalPage.classList.add('hidden');
+            readingPage.classList.remove('hidden');
+            window.scrollTo(0, 0);
+
+            loadingBar.style.opacity = '1';
+            loadingBar.style.width = '100%';
+            document.getElementById('recordID').innerText = String(index).padStart(2, '0');
+            articleTitle.innerText = title;
+            markdownArea.innerHTML = marked.parse(cleanText);
+
+            setTimeout(() => {
+                loadingBar.style.opacity = '0';
+                loadingBar.style.width = '0%';
+            }, 1000);
+        }
 
         function checkEntrance() {
             if (!localStorage.getItem(STORAGE_KEY)) {
-                disclaimerModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+                openDisclaimer(() => {
+                    localStorage.setItem(STORAGE_KEY, 'true');
+                    closeDisclaimer();
+                });
             }
         }
 
         enterBtn.addEventListener('click', () => {
-            localStorage.setItem(STORAGE_KEY, 'true');
-            disclaimerModal.classList.add('hidden');
-            document.body.style.overflow = '';
+            if (pendingDisclaimerAction) {
+                const action = pendingDisclaimerAction;
+                pendingDisclaimerAction = null;
+                action();
+            } else {
+                closeDisclaimer();
+            }
         });
 
         async function initPortal() {
@@ -285,27 +333,36 @@
         }
 
         async function loadMarkdown(filename, title, index) {
-            portalPage.classList.add('hidden');
-            readingPage.classList.remove('hidden');
-            window.scrollTo(0, 0);
-            
             loadingBar.style.opacity = '1';
             loadingBar.style.width = '30%';
-            document.getElementById('recordID').innerText = String(index).padStart(2, '0');
 
             try {
                 const response = await fetch(DATA_PATH + filename);
                 loadingBar.style.width = '70%';
                 if (!response.ok) throw new Error();
                 
-                let text = await response.text();
+                const text = await response.text();
                 loadingBar.style.width = '100%';
 
-                articleTitle.innerText = title;
-                const cleanText = text.replace(/<Title>.*?<\/Title>/gi, '');
-                markdownArea.innerHTML = marked.parse(cleanText);
+                const article = parseArticleText(text, title);
+                const render = () => renderArticle({
+                    title: article.title,
+                    index,
+                    cleanText: article.cleanText
+                });
+
+                if (article.danger) {
+                    openDisclaimer(() => {
+                        closeDisclaimer();
+                        render();
+                    });
+                } else {
+                    render();
+                }
 
             } catch (err) {
+                portalPage.classList.add('hidden');
+                readingPage.classList.remove('hidden');
                 articleTitle.innerText = "Error";
                 markdownArea.innerHTML = "<p>記録の復元に失敗しました。</p>";
             } finally {
