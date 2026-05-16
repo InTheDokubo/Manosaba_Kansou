@@ -240,12 +240,12 @@
 
         function parseArticleText(text, fallbackTitle) {
             const titleMatch = text.match(/<Title>(.*?)<\/Title>/i);
-            const danger = /<Denger\b/i.test(text);
+            const danger = /<Danger\b/i.test(text);
             const title = titleMatch ? titleMatch[1] : fallbackTitle;
             const cleanText = text
                 .replace(/<Title>.*?<\/Title>/gi, '')
-                .replace(/<Denger\b[^>]*>/gi, '')
-                .replace(/<\/Denger>/gi, '');
+                .replace(/<Danger\b[^>]*>/gi, '')
+                .replace(/<\/Danger>/gi, '');
 
             return { title, danger, cleanText };
         }
@@ -351,12 +351,14 @@
                     cleanText: article.cleanText
                 });
 
+                // Dangerタグ付きは必ず警告を表示（localstorageを無視）
                 if (article.danger) {
                     openDisclaimer(() => {
                         closeDisclaimer();
                         render();
                     });
                 } else {
+                    // Dangerタグなしは直接表示
                     render();
                 }
 
